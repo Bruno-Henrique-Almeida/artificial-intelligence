@@ -34,33 +34,28 @@ def naked_twins(values: Dict[str, str]) -> Union[Dict[str, str], bool]:
     dict
         The values dictionary with the naked twins eliminated from peers
     """
-    values = values.copy()
-    stalled = False
-    while not stalled:
-        solved_values_before = sum(1 for b in values if len(values[b]) == 1)
+    out = values.copy()
 
-        for unit in unitlist:
+    for unit in unitlist:
 
-            two_digit_boxes = [b for b in unit if len(values[b]) == 2]
-            pairs = {}
+        two_digit_boxes = [b for b in unit if len(out[b]) == 2]
+        pairs = {}
 
-            for b in two_digit_boxes:
-                pairs.setdefault(values[b], []).append(b)
+        for b in two_digit_boxes:
+            pairs.setdefault(out[b], []).append(b)
 
-            for pair_val, boxes_with_pair in pairs.items():
-                if len(boxes_with_pair) == 2:
-                    for b in unit:
-                        if b not in boxes_with_pair and any(d in values[b] for d in pair_val):
-                            for d in pair_val:
-                                values[b] = values[b].replace(d, "")
+        for pair_val, boxes_with_pair in pairs.items():
+            if len(boxes_with_pair) == 2:
+                for b in unit:
+                    if b not in boxes_with_pair:
+                        for digit in pair_val:
+                            if digit in out[b]:
+                                out[b] = out[b].replace(digit, "")
 
-        if any(len(values[b]) == 0 for b in values):
-            return False
+                                if len(out[b]) == 0:
+                                    return False
 
-        solved_values_after = sum(1 for b in values if len(values[b]) == 1)
-        stalled = (solved_values_before == solved_values_after)
-
-    return values
+    return out
 
 
 def eliminate(values: Dict[str, str]) -> Dict[str, str]:
@@ -132,6 +127,10 @@ def reduce_puzzle(values: Dict[str, str]) -> Union[Dict[str, str], bool]:
 
         values = eliminate(values)
         values = only_choice(values)
+        values = naked_twins(values)
+
+        if values is False:
+            return False
 
         solved_values_after = len([box for box in values.keys() if len(values[box]) == 1])
 
